@@ -1,4 +1,5 @@
-const CACHE_NAME = 'zikr-defteri-v1';
+const CACHE_VERSION = '__PWA_CACHE_VERSION__';
+const CACHE_NAME = `zikr-defteri-${CACHE_VERSION}`;
 const APP_SHELL = [
   '/',
   '/manifest.json',
@@ -33,26 +34,45 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const requestUrl = new URL(event.request.url);
+  const isSameOrigin = requestUrl.origin === self.location.origin;
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(event.request)
-        .then((networkResponse) => {
-          if (!networkResponse || networkResponse.status >= 400) {
-            return networkResponse;
-          }
-
-          const responseCopy = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseCopy);
-          });
-
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (!networkResponse || networkResponse.status >= 400 || !isSameOrigin) {
           return networkResponse;
-        })
-        .catch(() => caches.match('/'));
-    })
+        }
+
+        const responseCopy = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseCopy);
+        });
+
+        return networkResponse;
+      })
+      .catch(async () => {
+        const cachedResponse = await caches.match(event.request);
+
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        if (isSameOrigin) {
+          const fallbackResponse = await caches.match('/');
+
+          if (fallbackResponse) {
+            return fallbackResponse;
+          }
+        }
+
+        return Response.error();
+      })
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

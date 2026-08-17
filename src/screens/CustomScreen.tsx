@@ -28,6 +28,7 @@ const CATEGORY_OPTIONS: { label: string; value: EditableCategory }[] = [
 type CustomScreenProps = {
   counterTotals: CounterTotals;
   customItems: CustomPracticeItem[];
+  isCustomReady: boolean;
   onAdd: (input: CustomPracticeInput) => Promise<CustomPracticeItem>;
   onDelete: (id: string, clearCounterTotal: boolean) => Promise<void>;
   onSelectPractice: (item: PracticeItem) => void;
@@ -36,6 +37,7 @@ type CustomScreenProps = {
 export function CustomScreen({
   counterTotals,
   customItems,
+  isCustomReady,
   onAdd,
   onDelete,
   onSelectPractice,
@@ -59,6 +61,11 @@ export function CustomScreen({
   };
 
   const handleAdd = async () => {
+    if (!isCustomReady) {
+      Alert.alert('Kayıtlar hazırlanıyor', 'Kişisel kayıtlar yüklenmeden yeni kayıt eklenemez.');
+      return;
+    }
+
     const cleanTitle = title.trim();
     const cleanArabic = arabic.trim();
     const cleanLatin = latin.trim();
@@ -91,6 +98,11 @@ export function CustomScreen({
   };
 
   const confirmDelete = (id: string) => {
+    if (!isCustomReady) {
+      Alert.alert('Kayıtlar hazırlanıyor', 'Kişisel kayıtlar yüklenmeden silme yapılamaz.');
+      return;
+    }
+
     const total = counterTotals[id] ?? 0;
 
     if (total > 0) {
@@ -149,9 +161,14 @@ export function CustomScreen({
               return (
                 <Pressable
                   accessibilityRole="button"
+                  disabled={!isCustomReady}
                   key={option.value}
                   onPress={() => setCategory(option.value)}
-                  style={[styles.segmentButton, selected && styles.segmentButtonSelected]}
+                  style={[
+                    styles.segmentButton,
+                    selected && styles.segmentButtonSelected,
+                    !isCustomReady && styles.disabledControl,
+                  ]}
                 >
                   <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>
                     {option.label}
@@ -162,6 +179,7 @@ export function CustomScreen({
           </View>
 
           <TextInput
+            editable={isCustomReady}
             onChangeText={setTitle}
             placeholder="Başlık"
             placeholderTextColor={colors.mutedLight}
@@ -169,6 +187,7 @@ export function CustomScreen({
             value={title}
           />
           <TextInput
+            editable={isCustomReady}
             multiline
             onChangeText={setArabic}
             placeholder="Arapça metin"
@@ -178,6 +197,7 @@ export function CustomScreen({
             value={arabic}
           />
           <TextInput
+            editable={isCustomReady}
             multiline
             onChangeText={setLatin}
             placeholder="Okunuş"
@@ -187,6 +207,7 @@ export function CustomScreen({
             value={latin}
           />
           <TextInput
+            editable={isCustomReady}
             multiline
             onChangeText={setMeaning}
             placeholder="Anlam"
@@ -197,6 +218,7 @@ export function CustomScreen({
           />
           <View style={styles.row}>
             <TextInput
+              editable={isCustomReady}
               keyboardType="number-pad"
               onChangeText={setTarget}
               placeholder="Hedef"
@@ -205,6 +227,7 @@ export function CustomScreen({
               value={target}
             />
             <TextInput
+              editable={isCustomReady}
               onChangeText={setNote}
               placeholder="Not / kaynak"
               placeholderTextColor={colors.mutedLight}
@@ -213,13 +236,26 @@ export function CustomScreen({
             />
           </View>
 
-          <Pressable accessibilityRole="button" onPress={handleAdd} style={styles.addButton}>
-            <Text style={styles.addButtonText}>Kaydet ve sayaçta aç</Text>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!isCustomReady}
+            onPress={handleAdd}
+            style={[styles.addButton, !isCustomReady && styles.disabledControl]}
+          >
+            <Text style={styles.addButtonText}>
+              {isCustomReady ? 'Kaydet ve sayaçta aç' : 'Kayıtlar hazırlanıyor'}
+            </Text>
           </Pressable>
         </View>
 
         <Text style={styles.blockTitle}>Kayıtlarım</Text>
-        {customItems.length > 0 ? (
+        {!isCustomReady ? (
+          <EmptyState
+            icon="hourglass-outline"
+            text="Kişisel kayıtların cihazdan yükleniyor."
+            title="Kayıtlar hazırlanıyor"
+          />
+        ) : customItems.length > 0 ? (
           customItems.map((item) => (
             <PracticeCard
               item={item}
@@ -328,6 +364,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
     letterSpacing: 0,
+  },
+  disabledControl: {
+    opacity: 0.55,
   },
   blockTitle: {
     color: colors.ink,

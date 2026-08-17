@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
   initialWindowMetrics,
   SafeAreaProvider,
@@ -20,9 +20,10 @@ import { colors } from './src/theme';
 import { PracticeItem, TabKey } from './src/types';
 
 export default function App() {
+  const { height, width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [activePractice, setActivePractice] = useState<PracticeItem>(READY_ZIKR[0]);
-  const { addItem, items: customItems, removeItem } = useCustomItems();
+  const { addItem, isReady: isCustomReady, items: customItems, removeItem } = useCustomItems();
   const {
     addToTotal,
     clearTotal,
@@ -81,6 +82,7 @@ export default function App() {
           <CustomScreen
             counterTotals={counterTotals}
             customItems={customItems}
+            isCustomReady={isCustomReady}
             onAdd={addItem}
             onDelete={handleDeleteCustomItem}
             onSelectPractice={handleSelectPractice}
@@ -100,14 +102,14 @@ export default function App() {
     }
   };
 
-  const isWebPreview = Platform.OS === 'web';
+  const isDesktopWebPreview = Platform.OS === 'web' && width >= 768 && height >= 700;
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <View style={[styles.appStage, isWebPreview && styles.webStage]}>
+      <View style={[styles.appStage, isDesktopWebPreview && styles.webStage]}>
         <LinearGradient
           colors={[colors.background, '#FDFBF6']}
-          style={[styles.background, isWebPreview && styles.webPhone]}
+          style={[styles.background, isDesktopWebPreview && styles.webPhone]}
         >
           <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safeArea}>
             <View style={styles.screen}>{renderScreen()}</View>

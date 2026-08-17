@@ -1,56 +1,140 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CustomPracticeInput, CustomPracticeItem } from '../types';
 import { loadCustomItems, saveCustomItems } from '../storage/customItems';
+import { showStorageAlert } from '../utils/storageAlerts';
+
+function mergePendingItems(
+  storedItems: CustomPracticeItem[],
+  pendingAdds: CustomPracticeItem[],
+  pendingDeletes: Set<string>,
+) {
+  const addIds = new Set(pendingAdds.map((item) => item.id));
+  const cleanStoredItems = storedItems.filter(
+    (item) => !pendingDeletes.has(item.id) && !addIds.has(item.id),
+  );
+
+  return [...pendingAdds.filter((item) => !pendingDeletes.has(item.id)), ...cleanStoredItems];
+}
 
 export function useCustomItems() {
   const [items, setItems] = useState<CustomPracticeItem[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const isReadyRef = useRef(false);
+  const itemsRef = useRef<CustomPracticeItem[]>([]);
+  const pendingAddsRef = useRef<CustomPracticeItem[]>([]);
+  const pendingDeletesRef = useRef<Set<string>>(new Set());
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+
+  const updateItems = useCallback((nextItems: CustomPracticeItem[]) => {
+    itemsRef.current = nextItems;
+    setItems(nextItems);
+  }, []);
+
+  const enqueueSave = useCallback((nextItems: CustomPracticeItem[]) => {
+    const snapshot = nextItems.map((item) => ({ ...item }));
+
+    saveQueueRef.current = saveQueueRef.current
+      .catch(() => undefined)
+      .then(() => saveCustomItems(snapshot))
+      .catch(() => {
+        showStorageAlert(
+          'custom-save',
+          'Kişisel kayıt kaydedilemedi',
+          'Kişisel defterindeki son değişiklik cihaz depolamasına yazılamadı.',
+        );
+      });
+
+    void saveQueueRef.current;
+  }, []);
 
   useEffect(() => {
     let mounted = true;
 
     loadCustomItems()
-      .then((storedItems) => {
-        if (mounted) {
-          setItems(storedItems);
-        }
+      .catch(() => {
+        showStorageAlert(
+          'custom-load',
+          'Kişisel kayıtlar yüklenemedi',
+          'Kendi defterindeki kayıtlar cihazdan okunamadı.',
+        );
+        return [];
       })
-      .finally(() => {
-        if (mounted) {
-          setIsReady(true);
+      .then((storedItems) => {
+        if (!mounted) {
+          return;
+        }
+
+        const nextItems = mergePendingItems(
+          storedItems,
+          pendingAddsRef.current,
+          pendingDeletesRef.current,
+        );
+        const shouldPersist =
+          pendingAddsRef.current.length > 0 || pendingDeletesRef.current.size > 0;
+
+        pendingAddsRef.current = [];
+        pendingDeletesRef.current.clear();
+        isReadyRef.current = true;
+        updateItems(nextItems);
+        setIsReady(true);
+
+        if (shouldPersist) {
+          enqueueSave(nextItems);
         }
       });
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [enqueueSave, updateItems]);
 
-  const persist = useCallback(async (nextItems: CustomPracticeItem[]) => {
-    setItems(nextItems);
-    await saveCustomItems(nextItems);
-  }, []);
+  const persist = useCallback(
+    (nextItems: CustomPracticeItem[]) => {
+      updateItems(nextItems);
+
+      if (isReadyRef.current) {
+        enqueueSave(nextItems);
+      }
+    },
+    [enqueueSave, updateItems],
+  );
 
   const addItem = useCallback(
     async (input: CustomPracticeInput) => {
       const item: CustomPracticeItem = {
         ...input,
-        id: `custom-${Date.now()}`,
+        id: `custom-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
         source: 'custom',
         createdAt: new Date().toISOString(),
       };
 
-      await persist([item, ...items]);
+      const nextItems = [item, ...itemsRef.current.filter((currentItem) => currentItem.id !== item.id)];
+
+      if (!isReadyRef.current) {
+        pendingAddsRef.current = [
+          item,
+          ...pendingAddsRef.current.filter((currentItem) => currentItem.id !== item.id),
+        ];
+      }
+
+      persist(nextItems);
       return item;
     },
-    [items, persist],
+    [persist],
   );
 
   const removeItem = useCallback(
     async (id: string) => {
-      await persist(items.filter((item) => item.id !== id));
+      const nextItems = itemsRef.current.filter((item) => item.id !== id);
+
+      if (!isReadyRef.current) {
+        pendingDeletesRef.current.add(id);
+        pendingAddsRef.current = pendingAddsRef.current.filter((item) => item.id !== id);
+      }
+
+      persist(nextItems);
     },
-    [items, persist],
+    [persist],
   );
 
   return {

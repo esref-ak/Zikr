@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CounterTotals, loadCounterTotals, saveCounterTotals } from '../storage/counterTotals';
+import { showStorageAlert } from '../utils/storageAlerts';
 
 function applyDelta(totals: CounterTotals, id: string, amount: number) {
   const currentTotal = totals[id] ?? 0;
@@ -44,16 +45,30 @@ export function useCounterTotals() {
 
     saveQueueRef.current = saveQueueRef.current
       .catch(() => undefined)
-      .then(() => saveCounterTotals(snapshot));
+      .then(() => saveCounterTotals(snapshot))
+      .catch(() => {
+        showStorageAlert(
+          'counter-save',
+          'Sayaç kaydedilemedi',
+          'Son sayaç değişikliği cihaz depolamasına yazılamadı.',
+        );
+      });
 
-    void saveQueueRef.current.catch(() => undefined);
+    void saveQueueRef.current;
   }, []);
 
   useEffect(() => {
     let mounted = true;
 
     loadCounterTotals()
-      .catch((): CounterTotals => ({}))
+      .catch((): CounterTotals => {
+        showStorageAlert(
+          'counter-load',
+          'Sayaç yüklenemedi',
+          'Kayıtlı sayaç toplamları cihazdan okunamadı.',
+        );
+        return {};
+      })
       .then((storedTotals) => {
         if (!mounted) {
           return;

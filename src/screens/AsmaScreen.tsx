@@ -23,7 +23,7 @@ export function AsmaScreen({ counterTotals, onSelectPractice }: AsmaScreenProps)
     }
 
     return ESMA_UL_HUSNA.filter((item) =>
-      [item.title, item.arabic, item.latin, item.meaning]
+      [item.title, item.arabic, item.latin, item.meaning, item.note]
         .filter(Boolean)
         .join(' ')
         .toLocaleLowerCase('tr-TR')
@@ -62,6 +62,12 @@ export function AsmaScreen({ counterTotals, onSelectPractice }: AsmaScreenProps)
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.latin}>{item.latin}</Text>
               <Text style={styles.meaning}>{item.meaning}</Text>
+              {item.note ? (
+                <View style={styles.purposeBox}>
+                  <Text style={styles.purposeLabel}>Niyet</Text>
+                  <Text style={styles.purposeText}>{item.note}</Text>
+                </View>
+              ) : null}
               <Text style={styles.total}>Toplam {counterTotals[item.id] ?? 0}</Text>
             </View>
             <Text style={styles.arabic}>{item.arabic}</Text>
@@ -139,6 +145,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
+  },
+  purposeBox: {
+    backgroundColor: colors.surfaceTint,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  purposeLabel: {
+    color: colors.gold,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0,
+    marginBottom: 2,
+  },
+  purposeText: {
+    color: colors.ink,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
   },
   total: {
     color: colors.gold,

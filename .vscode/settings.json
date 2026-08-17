@@ -1,0 +1,5 @@
+{
+  "debug.javascript.autoAttachFilter": "disabled",
+  "npm.enableScriptExplorer": true,
+  "npm.packageManager": "npm"
+}

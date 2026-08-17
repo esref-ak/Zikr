@@ -1,17 +1,21 @@
 {
   "expo": {
-    "name": "Zikr",
-    "slug": "Zikr",
+    "name": "Zikr Defteri",
+    "slug": "zikr-defteri",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "zikrdefteri",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.esref.zikrdefteri",
+      "buildNumber": "1"
     },
     "android": {
+      "package": "com.esref.zikrdefteri",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0E6F5C",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,7 +23,17 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "Zikr Defteri",
+      "shortName": "Zikr",
+      "lang": "tr",
+      "display": "standalone",
+      "startUrl": ".",
+      "orientation": "portrait",
+      "themeColor": "#0E6F5C",
+      "backgroundColor": "#F7F3EA",
+      "barStyle": "default"
     }
   }
 }

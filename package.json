@@ -3,20 +3,39 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@expo/metro-runtime": "~57.0.10",
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.13",
+    "expo-linear-gradient": "~57.0.1",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
-    "react-native": "0.86.2"
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
+    "@expo/ngrok": "^4.1.0",
     "@types/react": "~19.2.2",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
+    "open:web": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-web.ps1",
+    "open:iphone": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-iphone.ps1",
+    "open:iphone-webapp": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-iphone-webapp.ps1",
+    "build:iphone-native": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/build-iphone-native.ps1",
+    "build:ios-production": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/appstore-build-submit.ps1",
+    "submit:ios": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/appstore-submit-latest.ps1",
+    "share:iphone": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/share-iphone.ps1",
+    "open:android": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-android.ps1",
     "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "ios": "npm run open:iphone",
+    "web": "expo start --web",
+    "build:web": "expo export -p web",
+    "postbuild:web": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/copy-pwa-assets.ps1",
+    "typecheck": "tsc --noEmit"
   },
   "private": true
 }

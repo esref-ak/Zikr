@@ -1,0 +1,7 @@
+{
+  "recommendations": [],
+  "unwantedRecommendations": [
+    "msjsdiag.vscode-react-native",
+    "vsmobile.vscode-react-native"
+  ]
+}

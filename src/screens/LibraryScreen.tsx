@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
 import { PracticeCard } from '../components/PracticeCard';
+import { ScrollTopButton } from '../components/ScrollTopButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import type { CounterTotals } from '../storage/counterTotals';
 import { colors, radius, spacing } from '../theme';
@@ -26,6 +27,8 @@ type LibraryScreenProps = {
 export function LibraryScreen({ counterTotals, items, onSelectPractice }: LibraryScreenProps) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   const visibleItems = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
@@ -45,7 +48,14 @@ export function LibraryScreen({ counterTotals, items, onSelectPractice }: Librar
   }, [filter, items, query]);
 
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <View style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        onScroll={(event) => setShowScrollTop(event.nativeEvent.contentOffset.y > 420)}
+        ref={scrollRef}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      >
       <ScreenHeader
         eyebrow="Kütüphane"
         title="Zikir, dua ve ayetler"
@@ -93,11 +103,19 @@ export function LibraryScreen({ counterTotals, items, onSelectPractice }: Librar
           title="Kayıt bulunamadı"
         />
       )}
-    </ScrollView>
+      </ScrollView>
+      <ScrollTopButton
+        onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+        visible={showScrollTop}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   content: {
     paddingBottom: 112,
     paddingHorizontal: spacing.lg,

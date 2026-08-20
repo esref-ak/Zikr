@@ -2,10 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PracticeCard } from '../components/PracticeCard';
+import { ScrollTopButton } from '../components/ScrollTopButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import type { CounterTotals } from '../storage/counterTotals';
 import { colors, radius, shadows, spacing } from '../theme';
 import { PracticeItem } from '../types';
+import { speakPracticeItem } from '../utils/speech';
 
 const QUICK_TARGETS = [33, 99, 100, 313, 500, 1000];
 
@@ -39,6 +41,8 @@ export function CounterScreen({
 }: CounterScreenProps) {
   const [sessionTotal, setSessionTotal] = useState(0);
   const [target, setTarget] = useState(activePractice.target ?? 99);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const sessionTotalRef = useRef(0);
 
   useEffect(() => {
@@ -102,19 +106,39 @@ export function CounterScreen({
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <View style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        onScroll={(event) => setShowScrollTop(event.nativeEvent.contentOffset.y > 420)}
+        ref={scrollRef}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      >
       <ScreenHeader
         action={
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              sessionTotalRef.current = 0;
-              setSessionTotal(0);
-            }}
-            style={styles.resetButton}
-          >
-            <Ionicons color={colors.emerald} name="refresh-outline" size={22} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel={`${activePractice.title} sesli dinle`}
+              accessibilityRole="button"
+              onPress={() => {
+                void speakPracticeItem(activePractice);
+              }}
+              style={styles.headerIconButton}
+            >
+              <Ionicons color={colors.emerald} name="volume-medium-outline" size={21} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Seans sayacını sıfırla"
+              accessibilityRole="button"
+              onPress={() => {
+                sessionTotalRef.current = 0;
+                setSessionTotal(0);
+              }}
+              style={styles.headerIconButton}
+            >
+              <Ionicons color={colors.emerald} name="refresh-outline" size={22} />
+            </Pressable>
+          </View>
         }
         eyebrow="Sayaç"
         title={activePractice.title}
@@ -169,10 +193,21 @@ export function CounterScreen({
             onPress={subtractCount}
             style={[
               styles.smallAction,
-              (!isCounterReady || sessionTotalRef.current <= 0) && styles.disabledAction,
+              (!isCounterReady || sessionTotal <= 0) && styles.disabledAction,
             ]}
           >
             <Ionicons color={colors.ink} name="remove-outline" size={20} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!isCounterReady || sessionTotal <= 0}
+            onPress={() => applySessionDelta(-10)}
+            style={[
+              styles.smallAction,
+              (!isCounterReady || sessionTotal <= 0) && styles.disabledAction,
+            ]}
+          >
+            <Text style={styles.deltaText}>-10</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -180,7 +215,7 @@ export function CounterScreen({
             onPress={() => applySessionDelta(10)}
             style={[styles.smallAction, !isCounterReady && styles.disabledAction]}
           >
-            <Text style={styles.plusTen}>+10</Text>
+            <Text style={styles.deltaText}>+10</Text>
           </Pressable>
         </View>
       </View>
@@ -221,17 +256,29 @@ export function CounterScreen({
           onSelect={onSelectPractice}
         />
       ))}
-    </ScrollView>
+      </ScrollView>
+      <ScrollTopButton
+        onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+        visible={showScrollTop}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   content: {
     paddingBottom: 112,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
   },
-  resetButton: {
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  headerIconButton: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderColor: colors.line,
@@ -390,7 +437,7 @@ const styles = StyleSheet.create({
   disabledAction: {
     opacity: 0.5,
   },
-  plusTen: {
+  deltaText: {
     color: colors.ink,
     fontSize: 15,
     fontWeight: '900',

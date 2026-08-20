@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, shadows, spacing } from '../theme';
 import { ContentCategory, PracticeItem } from '../types';
+import { speakPracticeItem } from '../utils/speech';
 
 const categoryLabels: Record<ContentCategory, string> = {
   zikr: 'Zikir',
@@ -22,13 +24,57 @@ type PracticeCardProps = {
   lifetimeTotal?: number;
   onSelect: (item: PracticeItem) => void;
   onDelete?: (id: string) => void;
+  onEdit?: (item: PracticeItem) => void;
 };
 
-export function PracticeCard({ item, lifetimeTotal, onSelect, onDelete }: PracticeCardProps) {
+const DOUBLE_PRESS_DELAY = 280;
+
+export function PracticeCard({
+  item,
+  lifetimeTotal,
+  onSelect,
+  onDelete,
+  onEdit,
+}: PracticeCardProps) {
   const accent = categoryColors[item.category];
+  const lastPressRef = useRef(0);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearPendingPress = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => clearPendingPress, []);
+
+  const handlePress = () => {
+    if (!onEdit) {
+      onSelect(item);
+      return;
+    }
+
+    const now = Date.now();
+
+    if (now - lastPressRef.current < DOUBLE_PRESS_DELAY) {
+      clearPendingPress();
+      lastPressRef.current = 0;
+      onEdit(item);
+      return;
+    }
+
+    lastPressRef.current = now;
+    clearPendingPress();
+    pressTimerRef.current = setTimeout(() => {
+      lastPressRef.current = 0;
+      pressTimerRef.current = null;
+      onSelect(item);
+    }, DOUBLE_PRESS_DELAY);
+  };
 
   return (
-    <Pressable accessibilityRole="button" onPress={() => onSelect(item)} style={styles.card}>
+    <Pressable accessibilityRole="button" onPress={handlePress} style={styles.card}>
       <View style={styles.topRow}>
         <View style={[styles.badge, { backgroundColor: `${accent}18` }]}>
           <Text style={[styles.badgeText, { color: accent }]}>{categoryLabels[item.category]}</Text>
@@ -50,20 +96,48 @@ export function PracticeCard({ item, lifetimeTotal, onSelect, onDelete }: Practi
         <Text style={styles.note} numberOfLines={1}>
           {item.note ?? (item.source === 'custom' ? 'Kişisel kayıt' : 'Hazır içerik')}
         </Text>
-        {onDelete ? (
+        <View style={styles.footerActions}>
           <Pressable
+            accessibilityLabel={`${item.title} sesli dinle`}
             accessibilityRole="button"
             onPress={(event) => {
               event.stopPropagation();
-              onDelete(item.id);
+              void speakPracticeItem(item);
             }}
-            style={styles.deleteButton}
+            style={styles.iconButton}
           >
-            <Ionicons color={colors.danger} name="trash-outline" size={18} />
+            <Ionicons color={colors.emerald} name="volume-medium-outline" size={18} />
           </Pressable>
-        ) : (
-          <Ionicons color={colors.emerald} name="arrow-forward-circle" size={24} />
-        )}
+          {onEdit ? (
+            <Pressable
+              accessibilityLabel={`${item.title} düzenle`}
+              accessibilityRole="button"
+              onPress={(event) => {
+                event.stopPropagation();
+                clearPendingPress();
+                onEdit(item);
+              }}
+              style={styles.iconButton}
+            >
+              <Ionicons color={colors.gold} name="create-outline" size={18} />
+            </Pressable>
+          ) : null}
+          {onDelete ? (
+            <Pressable
+              accessibilityLabel={`${item.title} sil`}
+              accessibilityRole="button"
+              onPress={(event) => {
+                event.stopPropagation();
+                onDelete(item.id);
+              }}
+              style={styles.iconButton}
+            >
+              <Ionicons color={colors.danger} name="trash-outline" size={18} />
+            </Pressable>
+          ) : (
+            <Ionicons color={colors.emerald} name="arrow-forward-circle" size={24} />
+          )}
+        </View>
       </View>
     </Pressable>
   );
@@ -155,8 +229,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0,
+    marginRight: spacing.sm,
   },
-  deleteButton: {
+  footerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
+  iconButton: {
     alignItems: 'center',
     borderRadius: radius.sm,
     height: 34,

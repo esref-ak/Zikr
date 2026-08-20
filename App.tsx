@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
   initialWindowMetrics,
@@ -16,6 +16,7 @@ import { CounterScreen } from './src/screens/CounterScreen';
 import { CustomScreen } from './src/screens/CustomScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
+import { loadActivePracticeId, saveActivePracticeId } from './src/storage/activePractice';
 import { colors } from './src/theme';
 import { PracticeItem, TabKey } from './src/types';
 
@@ -23,7 +24,14 @@ export default function App() {
   const { height, width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [activePractice, setActivePractice] = useState<PracticeItem>(READY_ZIKR[0]);
-  const { addItem, isReady: isCustomReady, items: customItems, removeItem } = useCustomItems();
+  const didRestoreActivePracticeRef = useRef(false);
+  const {
+    addItem,
+    isReady: isCustomReady,
+    items: customItems,
+    removeItem,
+    updateItem,
+  } = useCustomItems();
   const {
     addToTotal,
     clearTotal,
@@ -36,8 +44,34 @@ export default function App() {
     [customItems],
   );
 
+  useEffect(() => {
+    if (!isCustomReady || didRestoreActivePracticeRef.current) {
+      return;
+    }
+
+    didRestoreActivePracticeRef.current = true;
+    loadActivePracticeId()
+      .then((storedId) => {
+        const storedPractice = practiceItems.find((item) => item.id === storedId);
+
+        if (storedPractice) {
+          setActivePractice(storedPractice);
+        }
+      })
+      .catch(() => undefined);
+  }, [isCustomReady, practiceItems]);
+
+  useEffect(() => {
+    const syncedPractice = practiceItems.find((item) => item.id === activePractice.id);
+
+    if (syncedPractice && syncedPractice !== activePractice) {
+      setActivePractice(syncedPractice);
+    }
+  }, [activePractice, practiceItems]);
+
   const handleSelectPractice = (item: PracticeItem) => {
     setActivePractice(item);
+    void saveActivePracticeId(item.id);
     setActiveTab('counter');
   };
 
@@ -49,7 +83,9 @@ export default function App() {
     }
 
     if (activePractice.id === id) {
-      setActivePractice(READY_ZIKR[0]);
+      const fallbackPractice = READY_ZIKR[0];
+      setActivePractice(fallbackPractice);
+      void saveActivePracticeId(fallbackPractice.id);
     }
   };
 
@@ -86,6 +122,7 @@ export default function App() {
             onAdd={addItem}
             onDelete={handleDeleteCustomItem}
             onSelectPractice={handleSelectPractice}
+            onUpdate={updateItem}
           />
         );
       case 'home':
@@ -96,7 +133,6 @@ export default function App() {
             counterTotals={counterTotals}
             customCount={customItems.length}
             onNavigate={setActiveTab}
-            onSelectPractice={handleSelectPractice}
           />
         );
     }

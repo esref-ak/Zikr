@@ -56,16 +56,19 @@ const styles = StyleSheet.create({
   container: {
     ...shadows.soft,
     alignSelf: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: 'rgba(255, 255, 255, 0.74)',
+    borderColor: 'rgba(228, 222, 208, 0.76)',
     borderRadius: radius.xl,
     borderWidth: 1,
     bottom: 14,
+    elevation: 5,
     flexDirection: 'row',
     gap: 4,
     marginHorizontal: 14,
+    overflow: 'hidden',
     padding: 6,
     position: 'absolute',
+    shadowOpacity: 0.1,
   },
   tab: {
     alignItems: 'center',
@@ -75,7 +78,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   activeTab: {
-    backgroundColor: colors.emerald,
+    backgroundColor: 'rgba(14, 111, 92, 0.96)',
   },
   label: {
     color: colors.muted,

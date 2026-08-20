@@ -137,10 +137,40 @@ export function useCustomItems() {
     [persist],
   );
 
+  const updateItem = useCallback(
+    async (id: string, input: CustomPracticeInput) => {
+      const existingItem = itemsRef.current.find((item) => item.id === id);
+
+      if (!existingItem) {
+        return undefined;
+      }
+
+      const updatedItem: CustomPracticeItem = {
+        ...existingItem,
+        ...input,
+        id: existingItem.id,
+        source: 'custom',
+        createdAt: existingItem.createdAt,
+      };
+      const nextItems = itemsRef.current.map((item) => (item.id === id ? updatedItem : item));
+
+      if (!isReadyRef.current) {
+        pendingAddsRef.current = pendingAddsRef.current.map((item) =>
+          item.id === id ? updatedItem : item,
+        );
+      }
+
+      persist(nextItems);
+      return updatedItem;
+    },
+    [persist],
+  );
+
   return {
     items,
     isReady,
     addItem,
+    updateItem,
     removeItem,
   };
 }

@@ -1,4 +1,5 @@
 import * as Speech from 'expo-speech';
+import { Platform } from 'react-native';
 import { PracticeItem } from '../types';
 
 const ARABIC_TEXT_PATTERN = /[\u0600-\u06FF]/;
@@ -14,18 +15,30 @@ function getSpeechText(item: PracticeItem) {
   };
 }
 
-export async function speakPracticeItem(item: PracticeItem) {
+export function speakPracticeItem(item: PracticeItem) {
   const speech = getSpeechText(item);
 
   if (!speech.text) {
     return;
   }
 
-  await Speech.stop();
-  Speech.speak(speech.text, {
+  const options = {
     language: speech.language,
     pitch: 1,
     rate: speech.rate,
     volume: 1,
-  });
+  };
+
+  if (Platform.OS === 'web') {
+    Speech.speak(speech.text, options);
+    return;
+  }
+
+  void Speech.stop()
+    .then(() => {
+      Speech.speak(speech.text, options);
+    })
+    .catch(() => {
+      Speech.speak(speech.text, options);
+    });
 }

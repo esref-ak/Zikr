@@ -49,6 +49,9 @@ export function CounterScreen({
     sessionTotalRef.current = 0;
     setSessionTotal(0);
     setTarget(activePractice.target ?? 99);
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
   }, [activePractice.id, activePractice.target]);
 
   const count = useMemo(() => getCycleCount(sessionTotal, target), [sessionTotal, target]);
@@ -103,6 +106,13 @@ export function CounterScreen({
       'Genel toplam',
       `${activePractice.title} için bugüne kadar ${lifetimeTotal} defa zikrettin. Seans sayacını sıfırlamak bu toplamı değiştirmez.`,
     );
+  };
+
+  const handleSelectPractice = (item: PracticeItem) => {
+    onSelectPractice(item);
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
   };
 
   return (
@@ -253,7 +263,7 @@ export function CounterScreen({
           item={item}
           key={item.id}
           lifetimeTotal={counterTotals[item.id] ?? 0}
-          onSelect={onSelectPractice}
+          onSelect={handleSelectPractice}
         />
       ))}
       </ScrollView>

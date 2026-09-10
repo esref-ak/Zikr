@@ -36,7 +36,8 @@
     "web": "expo start --web",
     "build:web": "expo export -p web",
     "postbuild:web": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/copy-pwa-assets.ps1",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:site": "node scripts/build-site.mjs"
   },
   "private": true
 }

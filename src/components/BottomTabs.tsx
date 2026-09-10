@@ -1,22 +1,19 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, shadows } from '../theme';
+import { colors, shadows } from '../theme';
 import { TabKey } from '../types';
-
-type IoniconName = keyof typeof Ionicons.glyphMap;
 
 type TabItem = {
   key: TabKey;
   label: string;
-  icon: IoniconName;
+  symbol: string;
 };
 
 const TABS: TabItem[] = [
-  { key: 'home', label: 'Ana', icon: 'home-outline' },
-  { key: 'counter', label: 'Sayaç', icon: 'radio-button-on-outline' },
-  { key: 'library', label: 'Zikir', icon: 'book-outline' },
-  { key: 'asma', label: 'Esmâ', icon: 'sparkles-outline' },
-  { key: 'custom', label: 'Ekle', icon: 'add-circle-outline' },
+  { key: 'home', label: 'Ana', symbol: '⌂' },
+  { key: 'counter', label: 'Sayaç', symbol: '◎' },
+  { key: 'library', label: 'Zikirler', symbol: '≡' },
+  { key: 'asma', label: 'Esmâ', symbol: '✦' },
+  { key: 'custom', label: 'Ekle', symbol: '+' },
 ];
 
 type BottomTabsProps = {
@@ -33,15 +30,14 @@ export function BottomTabs({ activeTab, onChange }: BottomTabsProps) {
         return (
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel={tab.label}
             key={tab.key}
             onPress={() => onChange(tab.key)}
             style={[styles.tab, isActive && styles.activeTab]}
           >
-            <Ionicons
-              color={isActive ? colors.surface : colors.muted}
-              name={tab.icon}
-              size={21}
-            />
+            <View style={[styles.symbolWrap, isActive && styles.activeSymbolWrap]}>
+              <Text style={[styles.symbol, isActive && styles.activeSymbol]}>{tab.symbol}</Text>
+            </View>
             <Text style={[styles.label, isActive && styles.activeLabel]} numberOfLines={1}>
               {tab.label}
             </Text>
@@ -58,36 +54,56 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.74)',
     borderColor: 'rgba(228, 222, 208, 0.76)',
-    borderRadius: radius.xl,
+    borderRadius: 24,
     borderWidth: 1,
-    bottom: 14,
+    bottom: 10,
     elevation: 5,
     flexDirection: 'row',
-    gap: 4,
-    marginHorizontal: 14,
+    left: 12,
     overflow: 'hidden',
-    padding: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 7,
     position: 'absolute',
+    right: 12,
     shadowOpacity: 0.1,
   },
   tab: {
     alignItems: 'center',
-    borderRadius: radius.lg,
-    minWidth: 58,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 2,
+    paddingVertical: 2,
   },
   activeTab: {
-    backgroundColor: 'rgba(14, 111, 92, 0.96)',
+    backgroundColor: 'transparent',
+  },
+  symbolWrap: {
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 31,
+    justifyContent: 'center',
+    width: 38,
+  },
+  activeSymbolWrap: {
+    backgroundColor: colors.emerald,
+  },
+  symbol: {
+    color: colors.muted,
+    fontSize: 22,
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+  activeSymbol: {
+    color: colors.surface,
   },
   label: {
     color: colors.muted,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0,
-    marginTop: 2,
+    marginTop: 3,
   },
   activeLabel: {
-    color: colors.surface,
+    color: colors.emeraldDark,
   },
 });

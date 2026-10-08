@@ -7,7 +7,6 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import type { CounterTotals } from '../storage/counterTotals';
 import { colors, radius, shadows, spacing } from '../theme';
 import { PracticeItem } from '../types';
-import { speakPracticeItem } from '../utils/speech';
 
 const QUICK_TARGETS = [33, 99, 100, 313, 500, 1000];
 
@@ -127,16 +126,6 @@ export function CounterScreen({
       <ScreenHeader
         action={
           <View style={styles.headerActions}>
-            <Pressable
-              accessibilityLabel={`${activePractice.title} sesli dinle`}
-              accessibilityRole="button"
-              onPress={() => {
-                void speakPracticeItem(activePractice);
-              }}
-              style={styles.headerIconButton}
-            >
-              <Ionicons color={colors.emerald} name="volume-medium-outline" size={21} />
-            </Pressable>
             <Pressable
               accessibilityLabel="Seans sayacını sıfırla"
               accessibilityRole="button"

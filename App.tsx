@@ -148,8 +148,10 @@ export default function App() {
           style={[styles.background, isDesktopWebPreview && styles.webPhone]}
         >
           <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safeArea}>
-            <View style={styles.screen}>{renderScreen()}</View>
-            <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
+            <View style={[styles.screen, styles.contentFrame]}>
+              <View style={styles.screen}>{renderScreen()}</View>
+              <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
+            </View>
             <StatusBar style="dark" />
           </SafeAreaView>
         </LinearGradient>
@@ -187,5 +189,10 @@ const styles = StyleSheet.create({
   },
   screen: {
     flex: 1,
+  },
+  contentFrame: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 900,
   },
 });

@@ -2,8 +2,9 @@
   "expo": {
     "name": "Zikr Defteri",
     "slug": "zikr-defteri",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "version": "1.0.1",
+    "orientation": "default",
+    "plugins": ["./plugins/withAndroidRelease"],
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "zikrdefteri",
@@ -14,6 +15,7 @@
     },
     "android": {
       "package": "com.esref.zikrdefteri",
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#0E6F5C",
         "foregroundImage": "./assets/android-icon-foreground.png",

@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, shadows, spacing } from '../theme';
 import { ContentCategory, PracticeItem } from '../types';
-import { speakPracticeItem } from '../utils/speech';
 
 const categoryLabels: Record<ContentCategory, string> = {
   zikr: 'Zikir',
@@ -97,17 +96,6 @@ export function PracticeCard({
           {item.note ?? (item.source === 'custom' ? 'Kişisel kayıt' : 'Hazır içerik')}
         </Text>
         <View style={styles.footerActions}>
-          <Pressable
-            accessibilityLabel={`${item.title} sesli dinle`}
-            accessibilityRole="button"
-            onPress={(event) => {
-              event.stopPropagation();
-              void speakPracticeItem(item);
-            }}
-            style={styles.iconButton}
-          >
-            <Ionicons color={colors.emerald} name="volume-medium-outline" size={18} />
-          </Pressable>
           {onEdit ? (
             <Pressable
               accessibilityLabel={`${item.title} düzenle`}

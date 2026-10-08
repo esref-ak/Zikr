@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
 import { ScrollTopButton } from '../components/ScrollTopButton';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -8,7 +8,6 @@ import { ESMA_UL_HUSNA } from '../data/presets';
 import type { CounterTotals } from '../storage/counterTotals';
 import { colors, radius, shadows, spacing } from '../theme';
 import { PracticeItem } from '../types';
-import { speakPracticeItem } from '../utils/speech';
 
 type AsmaScreenProps = {
   counterTotals: CounterTotals;
@@ -18,7 +17,7 @@ type AsmaScreenProps = {
 export function AsmaScreen({ counterTotals, onSelectPractice }: AsmaScreenProps) {
   const [query, setQuery] = useState('');
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<FlatList<PracticeItem>>(null);
 
   const visibleNames = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
@@ -38,86 +37,78 @@ export function AsmaScreen({ counterTotals, onSelectPractice }: AsmaScreenProps)
 
   return (
     <View style={styles.screen}>
-      <ScrollView
+      <FlatList
+        data={visibleNames}
+        extraData={counterTotals}
+        keyExtractor={(item) => item.id}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
         contentContainerStyle={styles.content}
         onScroll={(event) => setShowScrollTop(event.nativeEvent.contentOffset.y > 420)}
         ref={scrollRef}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-      >
-        <ScreenHeader
-          eyebrow="Esmâ"
-          title="Esmâü'l-Hüsna"
-          subtitle="Allah’ın güzel isimleri, okunuşları ve kısa anlamları."
-        />
+        ListHeaderComponent={
+          <>
+            <ScreenHeader
+              eyebrow="Esmâ"
+              title="Esmâü'l-Hüsna"
+              subtitle="Allah’ın güzel isimleri, okunuşları ve kısa anlamları."
+            />
 
-        <TextInput
-          onChangeText={setQuery}
-          placeholder="İsim veya anlam ara"
-          placeholderTextColor={colors.mutedLight}
-          style={styles.searchInput}
-          value={query}
-        />
+            <TextInput
+              onChangeText={setQuery}
+              placeholder="İsim veya anlam ara"
+              placeholderTextColor={colors.mutedLight}
+              style={styles.searchInput}
+              value={query}
+            />
 
-        {visibleNames.length > 0 ? (
-          visibleNames.map((item) => (
-            <Pressable
-              accessibilityRole="button"
-              key={item.id}
-              onPress={() => onSelectPractice(item)}
-              style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.numberBox}>
-                  <Text style={styles.number}>{item.id.replace('esma-', '')}</Text>
-                </View>
-                <View style={styles.nameCopy}>
-                  <Text style={styles.title} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.latin}>{item.latin}</Text>
-                </View>
-                <Text style={styles.arabic} numberOfLines={2}>
-                  {item.arabic}
+          </>
+        }
+        renderItem={({ item }) => (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onSelectPractice(item)}
+            style={styles.card}
+          >
+            <View style={styles.cardHeader}>
+              <View style={styles.nameCopy}>
+                <Text style={styles.title} numberOfLines={2}>
+                  {item.title}
                 </Text>
-                <Pressable
-                  accessibilityLabel={`${item.title} sesli dinle`}
-                  accessibilityRole="button"
-                  onPress={(event) => {
-                    event.stopPropagation();
-                    void speakPracticeItem(item);
-                  }}
-                  style={styles.listenButton}
-                >
-                  <Ionicons color={colors.emerald} name="volume-medium-outline" size={18} />
-                </Pressable>
               </View>
+              <Text style={styles.arabic} numberOfLines={2}>
+                {item.arabic}
+              </Text>
+            </View>
 
-              <Text style={styles.meaning}>{item.meaning}</Text>
+            <Text style={styles.meaning}>{item.meaning}</Text>
 
-              {item.note ? (
-                <View style={styles.purposeBox}>
-                  <Text style={styles.purposeLabel}>Niyet</Text>
-                  <Text style={styles.purposeText}>{item.note}</Text>
-                </View>
-              ) : null}
-
-              <View style={styles.cardFooter}>
-                <Text style={styles.total}>Toplam {counterTotals[item.id] ?? 0}</Text>
-                <Ionicons color={colors.emerald} name="arrow-forward-circle" size={22} />
+            {item.note ? (
+              <View style={styles.purposeBox}>
+                <Text style={styles.purposeLabel}>Niyet</Text>
+                <Text style={styles.purposeText}>{item.note}</Text>
               </View>
-            </Pressable>
-          ))
-        ) : (
+            ) : null}
+
+            <View style={styles.cardFooter}>
+              <Text style={styles.total}>Toplam {counterTotals[item.id] ?? 0}</Text>
+              <Ionicons color={colors.emerald} name="arrow-forward-circle" size={22} />
+            </View>
+          </Pressable>
+        )}
+        ListEmptyComponent={
           <EmptyState
             icon="sparkles-outline"
             text="Farklı bir kelimeyle tekrar ara."
             title="Eşleşme yok"
           />
-        )}
-      </ScrollView>
+        }
+      />
       <ScrollTopButton
-        onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+        onPress={() => scrollRef.current?.scrollToOffset({ offset: 0, animated: true })}
         visible={showScrollTop}
       />
     </View>
@@ -160,20 +151,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  numberBox: {
-    alignItems: 'center',
-    backgroundColor: colors.goldSoft,
-    borderRadius: radius.md,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  number: {
-    color: colors.gold,
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0,
-  },
   nameCopy: {
     flex: 1,
     minWidth: 0,
@@ -185,14 +162,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     lineHeight: 22,
   },
-  latin: {
-    color: colors.emerald,
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0,
-    lineHeight: 18,
-    marginTop: 3,
-  },
   arabic: {
     color: colors.emeraldDark,
     flexShrink: 1,
@@ -202,16 +171,6 @@ const styles = StyleSheet.create({
     maxWidth: 112,
     textAlign: 'right',
     writingDirection: 'rtl',
-  },
-  listenButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceTint,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
   },
   meaning: {
     color: colors.muted,

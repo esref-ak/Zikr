@@ -1,0 +1,5 @@
+<tr-TR>
+Uygulama boyutu ve Android kod optimizasyonu iyileştirildi.
+Tablet, yatay ekran ve yeniden boyutlandırılan pencereler için ekran uyumu geliştirildi.
+Mevcut zikirler, kişisel kayıtlar ve toplam sayaç verileri korunur.
+</tr-TR>
